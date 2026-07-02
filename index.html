@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bin Canary</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Anton&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/game.css">
+</head>
+<body>
+
+<div id="scale-outer">
+  <div id="stage">
+
+    <div class="wizard-row">
+      <div class="wizard-portrait">
+        <img id="wizard-img" src="img/wizard_grumpy.webp" alt="Hexer Decimal">
+      </div>
+      <div class="speech-bar" id="speech-bar"></div>
+      <div class="target-sign">
+        <div class="label" data-str="sign.label"></div>
+        <div class="num" id="sign-target">&mdash;</div>
+      </div>
+    </div>
+
+    <div class="streetlamp-glow"></div>
+    <div class="fire-glow"></div>
+
+    <div class="shift-badge" id="shift-badge"></div>
+
+    <div class="running-total">
+      <div class="badge"><span data-str="total.label"></span> <span class="num" id="bin-total">0</span></div>
+    </div>
+
+    <div class="binyard" id="binyard"></div>
+
+    <div class="control-bar" id="control-bar">
+      <div class="title" data-str="title"></div>
+      <div class="buttons">
+        <button class="chunky btn-yellow" onclick="skipAlley()" data-str="buttons.newAlley"></button>
+        <button class="chunky btn-cyan" onclick="giveUp()" data-str="buttons.giveUp"></button>
+      </div>
+      <div class="workforce-meter">
+        <div class="workforce-fill" id="workforce-fill" style="width:100%;"></div>
+        <div class="workforce-label"><span data-str="meter.label"></span>&nbsp;<span id="workforce-num">0</span></div>
+      </div>
+    </div>
+
+    <div class="overlay-screen" id="end-screen">
+      <div class="end-panel">
+        <h2 id="end-headline"></h2>
+        <div class="end-sub" id="end-sub">&mdash;</div>
+        <div class="end-stats">
+          <div><span data-str="end.statCanaries"></span> <span class="val" id="end-canaries-found">0</span></div>
+          <div><span data-str="end.statAlleys"></span> <span class="val" id="end-alleys-cleared">0</span></div>
+          <div><span data-str="end.statCorrect"></span> <span class="val" id="end-correct">0</span> &nbsp; <span data-str="end.statSkipped"></span> <span class="val" id="end-incorrect">0</span></div>
+          <div><span data-str="end.statFalseAlarms"></span> <span class="val" id="end-false-alarms">0</span></div>
+          <div><span data-str="end.statAvg"></span> <span class="val" id="end-avg-time">&mdash;</span></div>
+          <div><span data-str="end.statRun"></span> <span class="val" id="end-run-time">&mdash;</span></div>
+        </div>
+        <div class="end-buttons">
+          <button class="chunky btn-yellow" onclick="playAgain()" data-str="buttons.playAgain"></button>
+          <button class="chunky btn-cyan" onclick="showStartScreen()" data-str="buttons.changeShift"></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay-screen show" id="start-screen">
+      <div class="end-panel start-panel">
+        <h2 data-str="start.title"></h2>
+        <div class="end-sub" data-str="start.tagline"></div>
+        <div id="tier-buttons"></div>
+        <button class="chunky btn-cyan howto-btn" onclick="showHowTo()" data-str="buttons.howToPlay"></button>
+      </div>
+    </div>
+
+    <div class="overlay-screen" id="howto-screen">
+      <div class="end-panel start-panel">
+        <h2 data-str="howto.title"></h2>
+        <div class="howto-body" id="howto-body"></div>
+        <button class="chunky btn-yellow" onclick="hideHowTo()" data-str="buttons.back"></button>
+      </div>
+    </div>
+
+    <div class="success-wrap" id="success-wrap">
+      <div class="starburst">
+        <div class="starburst-bg"></div>
+        <div class="starburst-core"></div>
+        <div class="starburst-text">
+          <span class="big" id="success-headline"></span>
+          <span class="small" id="rescue-line"></span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="js/strings.js"></script>
+<script src="js/game.js"></script>
+
+</body>
+</html>
