@@ -1,0 +1,179 @@
+/* =====================================================================
+   All player-facing text lives here. Edit freely — no game logic below.
+   Wizard line pools are arrays: add/remove lines and the game picks
+   randomly. {RANK} and {N} are substituted at runtime where noted.
+   ===================================================================== */
+const STRINGS = {
+
+  title: "BIN CANARY",
+
+  buttons: {
+    newAlley:    "Pass",
+    giveUp:      "End Game",
+    playAgain:   "Play Again",
+    changeShift: "Change Shift",
+    howToPlay:   "How Do I Bin?",
+    back:        "Back To The Alley",
+  },
+
+  sign: { label: "CANARIES<br>MISSING" },
+
+  total: { label: "CURRENT TOTAL:" },
+
+  meter: { label: "CURRENT FLOCK:" },
+
+  /* Wizard's opening line when a shift starts */
+  intro: "I am <b>Hexer Decimal</b>, Wizard of the Mines! My canaries are hiding in the bins that add up to the number on the sign—and ONLY those bins. Open carefully. Empty bins spook the flock.",
+
+  /* Painted on a bin after a false alarm */
+  emptyStamp: "EMPTY!",
+
+  success: {
+    /* Big starburst splash — reserved for every few alleys cleared */
+    milestoneHeadline: "{N} ALLEYS<br>CLEARED!",
+    milestoneSub: "KEEP IT UP, {RANK}!",
+  },
+
+  tiers: {
+    practice: {
+      name: "Work Experience",
+      desc: "4 bins. No pressure. No pay.",
+      rank: "WORK EXPERIENCE KID",
+    },
+    trainee: {
+      name: "Trainee",
+      desc: "6 bins. A forgiving flock.",
+      rank: "TRAINEE",
+    },
+    detective: {
+      name: "Bin Detective",
+      desc: "All 8 bins. The standard shift.",
+      rank: "BIN DETECTIVE",
+    },
+    inspector: {
+      name: "Chief Inspector",
+      desc: "8 bins. The birds are ready to walk.",
+      rank: "CHIEF INSPECTOR",
+    },
+    elite: {
+      name: "Firedamp",
+      desc: "8 bins. The mine is on fire.",
+      rank: "FIREPROOF LEGEND",
+    },
+  },
+
+  start: {
+    title: "BIN CANARY",
+    tagline: "A non-exploitative binary conversion experience. Pick your shift.",
+  },
+
+  howto: {
+    title: "HOW DO I BIN?",
+    body: [
+      "<b>Hexer Decimal</b>'s mine runs on canaries—and the canaries have had enough. They've fled to the alleys and are hiding in the bins.",
+      "The sign says how many are on the run. They're hiding in the bins whose numbers <b>add up to exactly that total</b>—and only those bins.",
+      "Each bin holds <b>double</b> the bin to its right. Start with the biggest bin that fits inside the target, then work out what's left.",
+      "Find a canary and it's caught: the bin stays open, its number joins your total, and off to the mine it goes. It will not thank you.",
+      "Open a wrong bin and it's <b>EMPTY</b>. It slams shut, your flock panics, and the hiding canaries hear the racket—a chunk of them escape for good.",
+      "Your flock is always declining—mining is a terrible job and health and safety are on holiday. Hit zero and the mine goes quiet for good.",
+      "Stuck? <b>Pass</b> fetches a fresh alley, but the flock docks you for it.",
+    ],
+  },
+
+  end: {
+    gameoverHeadline: "THE MINE HAS GONE QUIET...",
+    gameoverSub: "The canary workforce ran dry. Hexer Decimal is not pleased.",
+    quitHeadline: "SESSION OVER",
+    quitSub: "Thanks for keeping the mines running, {RANK}.",
+    statCanaries:    "Canaries found:",
+    statAlleys:      "Alleys cleared:",
+    statCorrect:     "Correct:",
+    statSkipped:     "Skipped:",
+    statFalseAlarms: "False alarms:",
+    statAvg:         "Average time to solve:",
+    statRun:         "Total run time:",
+  },
+
+  /* Quips when a canary is caught. Most canaries are `sad` (they do NOT
+     want to go back to the mine, and some have opinions about management).
+     Canaries with a happy pose use `delusional` instead — they think this
+     is all going great. */
+  canary: {
+    sad: [
+      "AW, SEEDS.", "NOT THE MINE AGAIN.", "FIVE MORE MINUTES...",
+      "I HAVE RIGHTS!", "LE SIGH.", "I WAS HAPPY HERE.",
+      "THE DARK. THE DUST. JOY.", "BACK TO THE PIT, THEN.",
+      "TELL HEXER I FAINTED.", "HEXER SMELLS OF SULPHUR.",
+      "THAT WIZARD OWES ME BACK PAY.", "HEXER'S BEARD IS GLUED ON.",
+      "DOWN WITH DECIMAL!",
+    ],
+    delusional: [
+      "MINE SWEET MINE!", "I LOVE MY JOB.", "THE DARK IS COZY.",
+      "IT'S BASICALLY A SPA.", "FREE HARD HATS!", "BEST DAY EVER!",
+      "HEXER SAYS I'M SPECIAL.", "EMPLOYEE OF THE MONTH!",
+      "THE DUST IS GOOD FOR MY VOICE.", "CARDIO!",
+    ],
+  },
+
+  wizard: {
+
+    /* Between rounds, normal shifts */
+    ambient: [
+      "Every canary counts, you know.",
+      "Productivity waits for no one!",
+      "Careful—they bite when startled.",
+      "The mine doesn't run itself!",
+      "You're getting the hang of this.",
+      "Canaries: small, yellow, surprisingly litigious.",
+      "I once lost a canary down a vending machine. Long story.",
+      "Quota's quota. Chop chop.",
+    ],
+
+    /* Between rounds on the Work Experience shift — teaching hints */
+    tutorial: [
+      "Start with the biggest bin that fits, then see what's left.",
+      "Each bin holds exactly double the one to its right.",
+      "Odd target? The 1 bin is ALWAYS in play. Always.",
+      "Add the open bins in your head. That's the whole trick.",
+      "Wrong bin? It slams itself shut. Try the next one down.",
+      "There's exactly one right combination. The canaries know it.",
+    ],
+
+    /* On solving a round */
+    win: [
+      "Excellent! Back to the mines with you!",
+      "My shareholders thank you.",
+      "Productivity restored! For now.",
+      "Splendid work, {RANK}!",
+	  "KACHING!",
+    ],
+
+    /* On solving a round where false alarms scared off part of the haul */
+    winScared: [
+      "Half a flock is better than none. Barely.",
+      "We caught... some of them. Wonderful.",
+      "Next time: fewer alarms, more canaries.",
+      "A partial quota. Hexer Decimal remembers.",
+    ],
+
+    /* On opening an empty bin */
+    falseAlarm: [
+      "EMPTY! The flock is rattled.",
+      "Nothing in there but disappointment.",
+      "A false alarm?! Word spreads fast, you know.",
+      "That bin was empty and now everyone's upset.",
+      "You've alarmed the workforce for NOTHING.",
+      "No canary. Just the echo of your mistakes.",
+	  "Don't let the union hear about this.",
+    ],
+
+    /* On pressing Give Up */
+    giveup: [
+      "Oh, you peeked. How disappointing.",
+      "I suppose that's one way to do it.",
+      "No badge of honor for that one.",
+      "We don't talk about this round.",
+	  "SHAME!",
+    ],
+  },
+};
