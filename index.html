@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Bin Canary</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Anton&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
@@ -27,7 +27,10 @@
     <div class="streetlamp-glow"></div>
     <div class="fire-glow"></div>
 
-    <div class="shift-badge" id="shift-badge"></div>
+    <div class="hud-left">
+      <div class="shift-badge" id="shift-badge"></div>
+      <div class="streak-chip" id="streak-chip"></div>
+    </div>
 
     <div class="running-total">
       <div class="badge"><span data-str="total.label"></span> <span class="num" id="bin-total">0</span></div>
@@ -38,8 +41,12 @@
     <div class="control-bar" id="control-bar">
       <div class="title" data-str="title"></div>
       <div class="buttons">
-        <button class="chunky btn-yellow" onclick="skipAlley()" data-str="buttons.newAlley"></button>
+        <button class="chunky btn-yellow" id="btn-pass" onclick="skipAlley()" data-str="buttons.newAlley"></button>
         <button class="chunky btn-cyan" onclick="giveUp()" data-str="buttons.giveUp"></button>
+      </div>
+      <div class="utility-buttons">
+        <button class="chunky btn-cyan btn-small" id="btn-pause" onclick="togglePause()" data-str="buttons.pause"></button>
+        <button class="chunky btn-cyan btn-small" id="btn-sfx" onclick="toggleSfx()"></button>
       </div>
       <div class="workforce-meter">
         <div class="workforce-fill" id="workforce-fill" style="width:100%;"></div>
@@ -54,11 +61,14 @@
         <div class="end-stats">
           <div><span data-str="end.statCanaries"></span> <span class="val" id="end-canaries-found">0</span></div>
           <div><span data-str="end.statAlleys"></span> <span class="val" id="end-alleys-cleared">0</span></div>
-          <div><span data-str="end.statCorrect"></span> <span class="val" id="end-correct">0</span> &nbsp; <span data-str="end.statSkipped"></span> <span class="val" id="end-incorrect">0</span></div>
+          <div><span data-str="end.statCorrect"></span> <span class="val" id="end-correct">0</span></div>
+          <div><span data-str="end.statSkipped"></span> <span class="val" id="end-incorrect">0</span></div>
           <div><span data-str="end.statFalseAlarms"></span> <span class="val" id="end-false-alarms">0</span></div>
           <div><span data-str="end.statAvg"></span> <span class="val" id="end-avg-time">&mdash;</span></div>
           <div><span data-str="end.statRun"></span> <span class="val" id="end-run-time">&mdash;</span></div>
         </div>
+        <div id="end-record-banner" data-str="end.recordBanner"></div>
+        <div id="end-records"></div>
         <div class="end-buttons">
           <button class="chunky btn-yellow" onclick="playAgain()" data-str="buttons.playAgain"></button>
           <button class="chunky btn-cyan" onclick="showStartScreen()" data-str="buttons.changeShift"></button>
@@ -83,6 +93,14 @@
       </div>
     </div>
 
+    <div class="overlay-screen" id="pause-screen">
+      <div class="end-panel">
+        <h2 data-str="pause.title"></h2>
+        <div class="end-sub" data-str="pause.sub"></div>
+        <button class="chunky btn-yellow" onclick="togglePause()" data-str="buttons.resume"></button>
+      </div>
+    </div>
+
     <div class="success-wrap" id="success-wrap">
       <div class="starburst">
         <div class="starburst-bg"></div>
@@ -97,7 +115,13 @@
   </div>
 </div>
 
+<div class="rotate-overlay">
+  <div class="rotate-msg" data-str="rotate"></div>
+</div>
+
 <script src="js/strings.js"></script>
+<script src="js/config.js"></script>
+<script src="js/audio.js"></script>
 <script src="js/game.js"></script>
 
 </body>

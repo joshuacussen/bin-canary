@@ -14,19 +14,6 @@ const STRINGS = {
     changeShift: "Change Shift",
     howToPlay:   "How Do I Bin?",
     back:        "Back To The Alley",
-    pause:       "Pause",
-    resume:      "Back To Work",
-    sfxOn:       "SFX: On",
-    sfxOff:      "SFX: Off",
-  },
-
-  pause: {
-    title: "PAUSED",
-    sub: "Union-mandated break. The quota will wait. Hexer won't like it.",
-  },
-
-  hud: {
-    streak: "CLEAN STREAK: {N}",  /* shown once you chain 2+ perfect solves */
   },
 
   sign: { label: "CANARIES<br>MISSING" },
@@ -91,7 +78,7 @@ const STRINGS = {
       "Each bin holds <b>double</b> the bin to its right. Start with the biggest bin that fits inside the target, then work out what's left.",
       "Find a canary and it's caught: the bin stays open, its number joins your total, and off to the mine it goes. It will not thank you.",
       "Open a wrong bin and it's <b>EMPTY</b>. It slams shut, your flock panics, and the hiding canaries hear the racket—a chunk of them escape for good.",
-      "Your flock is always declining—mining is a terrible job, and Hex and Safety are on holiday. Hit zero and the mine goes quiet for good.",
+      "Your flock is always declining—mining is a terrible job and health and safety are on holiday. Hit zero and the mine goes quiet for good.",
       "Stuck? <b>Pass</b> fetches a fresh alley, but the flock docks you for it.",
     ],
   },
@@ -108,8 +95,6 @@ const STRINGS = {
     statFalseAlarms: "False alarms:",
     statAvg:         "Average time to solve:",
     statRun:         "Total run time:",
-    recordBanner:    "NEW SHIFT RECORD!",
-    recordLabel:     "Shift best:",
   },
 
   /* Quips when a canary is caught. Most canaries are `sad` (they do NOT
@@ -172,14 +157,6 @@ const STRINGS = {
       "We caught... some of them. Wonderful.",
       "Next time: fewer alarms, more canaries.",
       "A partial quota. Hexer Decimal remembers.",
-    ],
-
-    /* On passing during Work Experience — the answer is revealed instead */
-    reveal: [
-      "THOSE were the bins. Study them.",
-      "Watch closely — this is the answer.",
-      "See? Biggest bin first, then the leftovers.",
-      "Memorize it. There WILL be a quota.",
     ],
 
     /* On pressing Pass — he is not happy about it */

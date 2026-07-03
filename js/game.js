@@ -27,52 +27,27 @@ const DELUSIONAL_VARIANTS = new Set([
   'img/canary_smug.webp',
 ]);
 
-/* ---- scale the fixed 1280x720 stage to fit the viewport ---- */
-const STAGE_W = 1280, STAGE_H = 720;
+/* ---- fit the stage to the viewport ----
+   Height is fixed at 720 design units; width is elastic so the alley
+   fills the window edge-to-edge (no side letterboxing). Clamped so the
+   layout never gets narrower than the bin row or absurdly wide. */
+const STAGE_H = 720, STAGE_MIN_W = 1100, STAGE_MAX_W = 1600;
 const stage = document.getElementById('stage');
+let stageW = 1280;
 function fitStage(){
-  const scale = Math.min(window.innerWidth / STAGE_W, window.innerHeight / STAGE_H);
+  let scale = window.innerHeight / STAGE_H;
+  let w = window.innerWidth / scale;
+  w = Math.max(STAGE_MIN_W, Math.min(STAGE_MAX_W, w));
+  scale = Math.min(window.innerHeight / STAGE_H, window.innerWidth / w);
+  stageW = Math.round(w);
+  stage.style.width = stageW + 'px';
   stage.style.transform = `scale(${scale})`;
 }
 window.addEventListener('resize', fitStage);
 fitStage();
 
-/* =====================================================================
-   Difficulty tiers. Text (names/descriptions/ranks) lives in strings.js;
-   only numbers live here.
-   - bits:          bins in play (4 -> 8/4/2/1, targets 1-15)
-   - halfLife:      seconds for the proportional decay to halve the flock
-   - baseDrain:     constant loss per second (guarantees 0 is reachable)
-   - openPct/Min:   startle cost of opening ANY bin (% of flock, floor)
-   - alarmPct/Min:  extra cost of opening an EMPTY bin
-   - alarmFactor:   solve reward multiplies by this per false alarm this
-                    round (the hiding canaries hear you and flee) — this is
-                    what makes open-everything a losing strategy
-   - skipPct/Min:   Pass cost
-   - meter:         false = no workforce, no costs, no game over
-   - drainRamp:     extra baseDrain added per minute of session time (the
-                    fire spreads) — makes long runs unsustainable by design
-   - fire:          everything is on fire
-   ===================================================================== */
-const TIERS = {
-  practice:  { bits:4, meter:false },
-  trainee:   { bits:6, meter:true, start:100, halfLife:90, baseDrain:0.2,
-               openPct:0.02, openMin:2, alarmPct:0.05, alarmMin:5,  alarmFactor:0.65, skipPct:0.15, skipMin:5 },
-  detective: { bits:8, meter:true, start:100, halfLife:45, baseDrain:0.4,
-               openPct:0.02, openMin:2, alarmPct:0.10, alarmMin:10, alarmFactor:0.5,  skipPct:0.15, skipMin:5 },
-  inspector: { bits:8, meter:true, start:60,  halfLife:25, baseDrain:0.8,
-               openPct:0.02, openMin:2, alarmPct:0.18, alarmMin:15, alarmFactor:0.4,  skipPct:0.15, skipMin:5 },
-  elite:     { bits:8, meter:true, start:50,  halfLife:18, baseDrain:1.2, drainRamp:0.6, fire:true,
-               openPct:0.03, openMin:3, alarmPct:0.25, alarmMin:20, alarmFactor:0.3,  skipPct:0.2,  skipMin:10 },
-};
-const TIER_ORDER = ['practice', 'trainee', 'detective', 'inspector', 'elite'];
-
-/* Meter display: asymptotic fill (no hard cap) and warning thresholds */
-const METER_SOFT_SCALE = 250;
-const WARN_AT = 60, DANGER_AT = 25;
-
-/* The big starburst splash only fires every Nth alley cleared */
-const MILESTONE_EVERY = 5;
+/* Difficulty tiers and tuning numbers live in js/config.js;
+   text lives in js/strings.js. */
 
 /* ---- game state ---- */
 const BIT_VALUES_ALL = [128,64,32,16,8,4,2,1];
@@ -99,10 +74,21 @@ let falseAlarmCount = 0;
 let roundFalseAlarms = 0;
 let roundSolved = false;
 let solveTimes = [];
+let cleanStreak = 0;
+let revealing = false;
+let paused = false;
+let pauseStart = 0;
+let decayArmed = false;   /* decay holds until the first bin click */
 
 /* ---- strings plumbing ---- */
 function randomFrom(list){
   return list[Math.floor(Math.random() * list.length)];
+}
+
+function popcount(n){
+  let c = 0;
+  while(n){ c += n & 1; n >>= 1; }
+  return c;
 }
 
 /* {RANK} works in any string routed through here */
@@ -150,7 +136,7 @@ function applyStrings(){
 /* ---- workforce meter ---- */
 /* Fire mode: 0 = comfortable, 1 = flock nearly gone. Drives glow + embers. */
 function fireIntensity(){
-  return Math.max(0.15, Math.min(1, (120 - workforce) / 120));
+  return Math.max(0.15, Math.min(1, (FIRE_PANIC_AT - workforce) / FIRE_PANIC_AT));
 }
 
 let lastShownWorkforce = 0;
@@ -169,20 +155,31 @@ function updateWorkforceUI(){
   else if(workforce <= WARN_AT) fill.classList.add('warn');
 }
 
-function spawnFloat(text, isGain){
+/* Floats rise from whatever caused the change: the clicked bin, the
+   Pass button, the total badge on a solve. */
+function spawnFloat(text, isGain, anchorEl){
   if(!cfg.meter) return;
   const el = document.createElement('div');
   el.className = 'float-num ' + (isGain ? 'gain' : 'loss');
   el.textContent = text;
-  el.style.left = (50 + (Math.random() * 24 - 12)) + '%';
-  document.getElementById('control-bar').appendChild(el);
+  const sr = stage.getBoundingClientRect();
+  const scale = sr.width / stageW;
+  let x = stageW / 2, y = 330;
+  if(anchorEl){
+    const r = anchorEl.getBoundingClientRect();
+    x = (r.left + r.width / 2 - sr.left) / scale;
+    y = (r.top - sr.top) / scale;
+  }
+  el.style.left = (x + (Math.random() * 30 - 15)) + 'px';
+  el.style.top = (y - 10) + 'px';
+  stage.appendChild(el);
   setTimeout(() => el.remove(), 1200);
 }
 
-function chargeWorkforce(n){
+function chargeWorkforce(n, anchorEl){
   if(!cfg.meter || gameEnded) return;
   workforce = Math.max(0, workforce - n);
-  spawnFloat('-' + Math.round(n), false);
+  spawnFloat('-' + Math.round(n), false, anchorEl);
   updateWorkforceUI();
   if(workforce <= 0) triggerGameOver();
 }
@@ -192,6 +189,11 @@ function chargeWorkforce(n){
 let decayRaf = null, lastDecayTs = null;
 function decayFrame(ts){
   if(!started || gameEnded || !cfg.meter){ decayRaf = null; lastDecayTs = null; return; }
+  if(paused || !decayArmed){
+    lastDecayTs = ts;
+    decayRaf = requestAnimationFrame(decayFrame);
+    return;
+  }
   if(lastDecayTs !== null){
     const dt = Math.min((ts - lastDecayTs) / 1000, 0.5);
     /* drainRamp: the fire spreads — constant drain grows over the session */
@@ -224,6 +226,10 @@ function startShift(tier){
   started = true;
   gameEnded = false;
   givingUp = false;
+  revealing = false;
+  paused = false;
+  decayArmed = false;
+  cleanStreak = 0;
   isFirstRound = true;
   workforce = cfg.meter ? cfg.start : 0;
   sessionStartTime = Date.now();
@@ -237,6 +243,8 @@ function startShift(tier){
 
   document.getElementById('start-screen').classList.remove('show');
   document.getElementById('end-screen').classList.remove('show');
+  document.getElementById('pause-screen').classList.remove('show');
+  updateStreakChip();
   document.getElementById('control-bar').classList.toggle('no-meter', !cfg.meter);
   document.getElementById('wizard-img').src = IMG.wizardGrumpy;
 
@@ -266,14 +274,15 @@ function emberTick(){
   if(Math.random() > 0.25 + 0.75 * heat) return;
   const e = document.createElement('div');
   e.className = 'ember';
-  e.style.left = (Math.random() * STAGE_W) + 'px';
-  e.style.top = (640 + Math.random() * 70) + 'px';
+  e.style.left = (Math.random() * stageW) + 'px';
+  e.style.top = (560 + Math.random() * 60) + 'px';
   const size = (4 + Math.random() * 5) * (0.75 + heat * 0.9);
   e.style.width = size + 'px';
   e.style.height = size + 'px';
   e.style.animationDuration = ((2.2 + Math.random() * 2.2) * (1.15 - heat * 0.45)) + 's';
   stage.appendChild(e);
   setTimeout(() => e.remove(), 4600);
+  if(Math.random() < 0.22) SFX.pop(heat);
 }
 
 function showStartScreen(){
@@ -287,6 +296,40 @@ function showStartScreen(){
 function showHowTo(){ document.getElementById('howto-screen').classList.add('show'); }
 function hideHowTo(){ document.getElementById('howto-screen').classList.remove('show'); }
 
+function togglePause(){
+  if(!started || gameEnded) return;
+  paused = !paused;
+  document.getElementById('pause-screen').classList.toggle('show', paused);
+  if(paused){
+    pauseStart = Date.now();
+  } else {
+    /* shift the clocks so paused time doesn't count against the player */
+    const d = Date.now() - pauseStart;
+    sessionStartTime += d;
+    roundStartTime += d;
+  }
+}
+
+function toggleSfx(){
+  SFX.setEnabled(!SFX.isEnabled());
+  try{ localStorage.setItem('binCanarySfx', SFX.isEnabled() ? '1' : '0'); }catch(e){}
+  updateSfxButton();
+}
+function updateSfxButton(){
+  document.getElementById('btn-sfx').textContent =
+    SFX.isEnabled() ? STRINGS.buttons.sfxOn : STRINGS.buttons.sfxOff;
+}
+
+function updateStreakChip(){
+  const chip = document.getElementById('streak-chip');
+  if(cleanStreak >= 2){
+    chip.textContent = STRINGS.hud.streak.replace('{N}', cleanStreak);
+    chip.classList.add('show');
+  } else {
+    chip.classList.remove('show');
+  }
+}
+
 function playAgain(){ startShift(currentTier); }
 
 function formatDuration(ms){
@@ -297,13 +340,30 @@ function formatDuration(ms){
 }
 
 function skipAlley(){
-  if(!started || gameEnded || givingUp) return;
+  if(!started || gameEnded || givingUp || paused || revealing) return;
   incorrectCount++;
-  if(cfg.meter){
-    chargeWorkforce(Math.max(cfg.skipMin, cfg.skipPct * workforce));
-    if(gameEnded) return;
+  cleanStreak = 0;
+  updateStreakChip();
+  SFX.pass();
+  if(!cfg.meter){
+    /* Work Experience: a pass shows the answer before moving on —
+       the moment a stuck learner most needs to see it */
+    revealing = true;
+    BITS.forEach((val, i) => toggleBin(i, !!(binTarget & val)));
+    setWizardLine(randomFrom(STRINGS.wizard.reveal));
+    clearTimeout(advanceTimer);
+    advanceTimer = setTimeout(() => {
+      revealing = false;
+      newBinaryTarget();
+    }, 2000);
+    return;
   }
+  chargeWorkforce(Math.max(cfg.skipMin, cfg.skipPct * workforce),
+    document.getElementById('btn-pass'));
+  if(gameEnded) return;
   newBinaryTarget();
+  /* after newBinaryTarget so the angry line isn't overwritten by ambient */
+  setWizardLine(randomFrom(STRINGS.wizard.pass));
 }
 
 function showEndScreen(type){
@@ -327,10 +387,35 @@ function showEndScreen(type){
   if(type === 'gameover'){
     headline.textContent = fillRank(STRINGS.end.gameoverHeadline);
     sub.textContent = fillRank(STRINGS.end.gameoverSub);
+    SFX.gameover();
   } else {
     headline.textContent = fillRank(STRINGS.end.quitHeadline);
     sub.textContent = fillRank(STRINGS.end.quitSub);
   }
+
+  /* shift records, persisted per tier */
+  const runMs = Date.now() - sessionStartTime;
+  let recs = {};
+  try{ recs = JSON.parse(localStorage.getItem('binCanaryRecords')) || {}; }catch(e){}
+  const best = recs[currentTier] || { canaries: 0, alleys: 0, runMs: 0 };
+  const firstRun = best.canaries === 0 && best.alleys === 0 && best.runMs === 0;
+  const newC = totalCanariesFound > best.canaries;
+  const newA = alleysCleared > best.alleys;
+  const newR = runMs > best.runMs;
+  recs[currentTier] = {
+    canaries: Math.max(best.canaries, totalCanariesFound),
+    alleys: Math.max(best.alleys, alleysCleared),
+    runMs: Math.max(best.runMs, runMs),
+  };
+  try{ localStorage.setItem('binCanaryRecords', JSON.stringify(recs)); }catch(e){}
+  document.getElementById('end-record-banner').style.display =
+    !firstRun && (newC || newA || newR) ? 'block' : 'none';
+  const b = recs[currentTier];
+  document.getElementById('end-records').innerHTML =
+    `${STRINGS.end.recordLabel} ${b.canaries} canaries${newC && !firstRun ? ' ★' : ''}`
+    + ` &middot; ${b.alleys} alleys${newA && !firstRun ? ' ★' : ''}`
+    + ` &middot; ${formatDuration(b.runMs)}${newR && !firstRun ? ' ★' : ''}`;
+
   document.getElementById('end-screen').classList.add('show');
 }
 
@@ -369,14 +454,15 @@ function buildBins(){
       img.src = variant;
       binDelusional[i] = DELUSIONAL_VARIANTS.has(variant);
       img.style.transformOrigin = '50% 100%';
-      img.style.transform = 'scale(' + (0.82 + Math.random() * 0.3).toFixed(3) + ')';
+      img.style.transform = 'scale('
+        + (CANARY_SCALE_MIN + Math.random() * CANARY_SCALE_RANGE).toFixed(3) + ')';
     }
     yard.appendChild(bin);
   });
 }
 
 function toggleBin(i, forceState){
-  if((!started || gameEnded) && forceState === undefined) return;
+  if((!started || gameEnded || paused || revealing) && forceState === undefined) return;
   const bin = document.getElementById('bin-' + i);
   const wasOpen = binOpen[i];
   /* A found canary stays found — opened canary bins lock open */
@@ -390,16 +476,27 @@ function toggleBin(i, forceState){
     bin.classList.remove('startled');
     bin.classList.add('open');
     if(forceState === undefined){
+      /* first touch of the shift arms the decay — reading time is free */
+      if(!decayArmed){
+        decayArmed = true;
+        sessionStartTime = Date.now();
+        roundStartTime = Date.now();
+      }
+      SFX.thunk();
       if(cfg.meter){
         let cost = Math.max(cfg.openMin, cfg.openPct * workforce);
         if(!binHasCanary[i]) cost += Math.max(cfg.alarmMin, cfg.alarmPct * workforce);
-        chargeWorkforce(cost);
+        chargeWorkforce(cost, bin);
       }
       if(binHasCanary[i]){
+        SFX.chirp();
         showQuip(i);
       } else {
+        SFX.slam();
         falseAlarmCount++;
         roundFalseAlarms++;
+        cleanStreak = 0;
+        updateStreakChip();
         bin.classList.add('found-empty');
         setWizardLine(randomFrom(STRINGS.wizard.falseAlarm));
         clearTimeout(emptyTimers[i]);
@@ -428,6 +525,11 @@ function updateBinTotal(){
   let total = 0;
   binOpen.forEach((open, i) => { if(open && binHasCanary[i]) total += BITS[i]; });
   const totalEl = document.getElementById('bin-total');
+  if(revealing){
+    totalEl.textContent = total;
+    totalEl.classList.toggle('match', total === binTarget);
+    return;
+  }
   if(!givingUp){
     totalEl.textContent = total;
     totalEl.classList.toggle('match', total === binTarget);
@@ -445,13 +547,17 @@ function celebrate(amount){
   solveTimes.push(elapsed);
   alleysCleared++;
   correctCount++;
-  /* False alarms this round scared off part of the rescue */
+  /* False alarms this round scared off part of the rescue; a clean
+     streak (built up BEFORE this solve) multiplies it back up */
+  const streakMult = Math.min(STREAK_CAP, 1 + STREAK_BONUS * cleanStreak);
   const reward = Math.max(1, Math.round(
-    amount * Math.pow(cfg.alarmFactor || 1, roundFalseAlarms)));
+    amount * Math.pow(cfg.alarmFactor || 1, roundFalseAlarms) * streakMult));
+  cleanStreak = roundFalseAlarms === 0 ? cleanStreak + 1 : 0;
+  updateStreakChip();
   totalCanariesFound += reward;
   if(cfg.meter){
     workforce += reward;
-    spawnFloat('+' + reward, true);
+    spawnFloat('+' + reward, true, document.querySelector('.running-total .badge'));
     updateWorkforceUI();
   }
 
@@ -463,7 +569,8 @@ function celebrate(amount){
 
   /* Every solve: confetti + happy wizard. The starburst splash is
      reserved for milestones so it stays special. */
-  const milestone = alleysCleared % MILESTONE_EVERY === 0;
+  const milestone = MILESTONE_ALLEYS.includes(alleysCleared);
+  if(milestone) SFX.milestone(); else SFX.win();
   const wrap = document.getElementById('success-wrap');
   if(milestone){
     document.getElementById('success-headline').innerHTML =
@@ -487,7 +594,7 @@ function launchConfetti(){
   for(let n = 0; n < 42; n++){
     const piece = document.createElement('div');
     piece.className = 'confetti-piece';
-    piece.style.left = (Math.random() * STAGE_W) + 'px';
+    piece.style.left = (Math.random() * stageW) + 'px';
     piece.style.background = colors[Math.floor(Math.random() * colors.length)];
     piece.style.animationDuration = (1.1 + Math.random() * 0.9) + 's';
     piece.style.transform = `rotate(${Math.random()*360}deg)`;
@@ -499,7 +606,10 @@ function launchConfetti(){
 function newBinaryTarget(){
   const maxTarget = (1 << cfg.bits) - 1;
   let next;
-  do { next = Math.floor(Math.random() * maxTarget) + 1; } while(next === binTarget);
+  do {
+    next = Math.floor(Math.random() * maxTarget) + 1;
+  } while(next === binTarget
+    || (popcount(next) < (cfg.minBits || 1) && Math.random() > (cfg.lowBitChance || 0)));
   binTarget = next;
   binOpen = new Array(cfg.bits).fill(false);
   binHasCanary = BITS.map(val => !!(binTarget & val));
@@ -517,7 +627,7 @@ function newBinaryTarget(){
 }
 
 function giveUp(){
-  if(!started || gameEnded || givingUp) return;
+  if(!started || gameEnded || givingUp || paused || revealing) return;
   givingUp = true;
   setWizardLine(randomFrom(STRINGS.wizard.giveup));
   BITS.forEach((val, i) => {
@@ -535,3 +645,5 @@ function resolveGiveUp(){
 
 /* ---- boot: strings in, start screen up, nothing running yet ---- */
 applyStrings();
+try{ SFX.setEnabled(localStorage.getItem('binCanarySfx') !== '0'); }catch(e){}
+updateSfxButton();
