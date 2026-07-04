@@ -79,8 +79,12 @@ const SFX = (() => {
       tone(320, 0.12, { type:'sawtooth', vol:0.32, slideTo:210 });
       tone(210, 0.16, { type:'sawtooth', vol:0.28, when:0.12, slideTo:140 });
     },
-    /* round solved */
-    win(){ [523, 659, 784].forEach((f, i) => tone(f, 0.1, { type:'triangle', vol:0.42, when:i * 0.09 })); },
+    /* round solved — a proper ta-da: quick run up, held bright finish */
+    win(){
+      [523, 659, 784, 1047].forEach((f, i) =>
+        tone(f, i === 3 ? 0.28 : 0.08, { type:'triangle', vol:0.45, when:i * 0.07 }));
+      tone(1319, 0.24, { type:'triangle', vol:0.22, when:0.21 });
+    },
     /* milestone splash */
     milestone(){
       [523, 659, 784, 1047, 1319].forEach((f, i) =>
@@ -93,5 +97,11 @@ const SFX = (() => {
     },
     /* fire crackle pops, scaled by intensity */
     pop(heat){ noise(0.04, { vol:0.08 + heat * 0.18, freq:500 + Math.random() * 1500, q:2 }); },
+    /* Waterfoul Alley caught — steam hiss as the flames retreat */
+    splash(){
+      noise(0.25, { vol:0.5, freq:2200, q:0.6 });
+      noise(0.35, { vol:0.35, freq:900, q:0.8, when:0.05 });
+      tone(180, 0.3, { type:'sine', vol:0.25, slideTo:90, when:0.02 });
+    },
   };
 })();

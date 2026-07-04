@@ -3,6 +3,16 @@
   --canary-mid:#F2C230;
   --canary-dark:#C9981E;
   --ink:#1A1714;
+  /* Every actual NUMBER, everywhere in the app (HUD, tables, bin
+     stencils), uses this ONE font — deliberately not a monospace: that
+     read as "terminal/code" against the comic-book art. Fredoka is
+     rounded and game-appropriate like Bangers/Comic Neue, but its
+     digits are genuinely distinct (flagged 1, crossbarred 7), which is
+     the actual fix for 1-vs-7 confusion — tabular-nums (still used
+     alongside it) only evens out digit WIDTH, never digit SHAPE. Text
+     labels stay in their existing display fonts — only the digit-
+     bearing element switches to this. */
+  --font-num:'Fredoka', sans-serif;
 }
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;height:100%;}
@@ -48,10 +58,11 @@ body{
   text-shadow:2px 2px 0 #000, 0 0 20px rgba(247,221,93,0.25);
 }
 
-/* ============ WIZARD ROW (fixed position, never affects bins) ============ */
+/* ============ WIZARD ROW (fixed position, never affects bins) ============
+   Starts below the scoreboard, which now owns the top-center strip. */
 .wizard-row{
-  position:absolute; top:96px; left:44px; right:44px;
-  height:150px;
+  position:absolute; top:130px; left:44px; right:44px;
+  height:140px;
   display:flex; align-items:flex-start; gap:18px;
 }
 .wizard-portrait{
@@ -74,29 +85,6 @@ body{
      never covers the lower arc; above it, unclipped so the hat breaks the
      frame. Geometry assumes width:108 in a 112px content circle. */
   clip-path:path('M -3 -40 L 111 -40 L 111 71 A 57 57 0 0 1 -3 71 Z');
-}
-
-.target-sign{
-  flex:0 0 auto;
-  width:150px;
-  background:#EDE7DC; color:#2a2723;
-  border:4px solid #000;
-  border-radius:10px;
-  padding:10px 8px;
-  text-align:center;
-  transform:rotate(2.5deg);
-  box-shadow:0 6px 0 rgba(0,0,0,0.4);
-}
-.target-sign .label{
-  font-family:'Anton', sans-serif;
-  font-size:13px; letter-spacing:0.04em;
-  color:#5a5346;
-}
-.target-sign .num{
-  font-family:'Anton', sans-serif;
-  font-size:46px;
-  color:#B23A3A;
-  line-height:1.1;
 }
 
 .speech-bar{
@@ -140,9 +128,19 @@ body{
   pointer-events:none;
 }
 
-/* ============ SHIFT BADGE — difficulty indicator, top left ============ */
+/* ============ TOP HUD CORNERS ============
+   Left: shift badge + blaze gauge (both "what am I up against").
+   Right: profit + streak (both "how am I doing"). Both containers are
+   plain flex rows; the children no longer position themselves. */
+.hud-left, .hud-right{
+  position:absolute; top:14px;
+  display:flex; align-items:flex-start; gap:10px;
+  z-index:10;
+  pointer-events:none;
+}
+.hud-left{ left:16px; }
+.hud-right{ right:16px; }
 .shift-badge{
-  position:absolute; top:14px; left:16px;
   background:#1a1714;
   border:3px solid #000;
   border-radius:10px;
@@ -152,8 +150,6 @@ body{
   text-transform:uppercase;
   color:var(--canary);
   box-shadow:0 4px 0 rgba(0,0,0,0.4);
-  z-index:10;
-  pointer-events:none;
 }
 .shift-badge:empty{ display:none; }
 .shift-badge.fire{
@@ -161,23 +157,81 @@ body{
   text-shadow:0 0 12px rgba(255,110,20,0.9);
   border-color:#4a1200;
 }
+/* Label sits on its own static line so it can never shift as the
+   value below it grows a digit — that split-string jitter was the
+   actual complaint, not the number itself changing width. */
+.money-chip{
+  width:150px;
+  display:flex; flex-direction:column; align-items:center;
+  background:#1a1714;
+  border:3px solid #000;
+  border-radius:10px;
+  padding:7px 8px 5px;
+  box-shadow:0 4px 0 rgba(0,0,0,0.4);
+}
+.money-label{
+  font-family:'Anton', sans-serif;
+  font-size:11px; letter-spacing:0.06em;
+  color:#8a8378;
+  line-height:1.2;
+}
+.money-value{
+  font-family:var(--font-num);
+  font-weight:700;
+  font-size:20px; letter-spacing:0.02em;
+  font-variant-numeric:tabular-nums;
+  color:#F2C230;
+  line-height:1.25;
+  white-space:nowrap;
+  overflow:hidden;
+  max-width:100%;
+}
+/* Firedamp-only — sits beside the shift badge in the top-left */
+.blaze-gauge{
+  width:150px;
+  display:flex; flex-direction:column; align-items:center;
+  background:#2a0f04;
+  border:3px solid #000;
+  border-radius:10px;
+  padding:7px 8px 5px;
+  box-shadow:0 4px 0 rgba(0,0,0,0.4);
+}
+.blaze-label{
+  font-family:'Anton', sans-serif;
+  font-size:11px; letter-spacing:0.06em;
+  color:#d98a5f;
+  line-height:1.2;
+}
+.blaze-value{
+  font-family:var(--font-num);
+  font-weight:700;
+  font-size:17px; letter-spacing:0.02em;
+  color:#FF9C41;
+  line-height:1.25;
+  text-shadow:0 0 8px rgba(255,110,20,0.6);
+}
+.blaze-gauge.pulsing .blaze-value{
+  animation:blaze-pulse 0.9s ease-in-out infinite;
+}
+@keyframes blaze-pulse{
+  0%, 100%{ opacity:1; text-shadow:0 0 8px rgba(255,110,20,0.6); }
+  50%{ opacity:0.75; text-shadow:0 0 16px rgba(255,60,0,0.95); }
+}
+
 .streak-chip{
-  position:absolute; top:60px; left:16px;
   background:#132a18;
   border:3px solid #000;
   border-radius:10px;
-  padding:5px 12px 3px;
+  padding:7px 12px 4px;
   font-family:'Bangers', cursive;
   font-size:16px; letter-spacing:0.05em;
   color:#6FE38A;
   box-shadow:0 4px 0 rgba(0,0,0,0.4);
-  z-index:10;
-  pointer-events:none;
   opacity:0;
-  transform:translateY(-6px);
+  transform:translateX(-8px);
   transition:opacity 0.25s, transform 0.25s;
 }
-.streak-chip.show{ opacity:1; transform:translateY(0); }
+.streak-chip.show{ opacity:1; transform:translateX(0); }
 
 /* ============ FIRE MODE (elite) ============ */
 .fire-glow{
@@ -226,6 +280,33 @@ body{
   100%{ transform:translate(40px, -640px); opacity:0; }
 }
 
+/* ============ WATERFOUL ALLEY (Firedamp only) ============
+   Every bin has a bird and nothing self-corrects — the cyan wash and
+   hue-shifted canaries are the only signal that the rules changed. */
+.waterfoul-wash{
+  position:absolute; inset:0;
+  pointer-events:none;
+  z-index:6;
+  opacity:0;
+  transition:opacity 0.6s;
+  background:
+    radial-gradient(ellipse 1400px 600px at 50% -10%, rgba(60,200,220,0.28), transparent 65%),
+    linear-gradient(180deg, rgba(20,90,110,0.18), transparent 50%);
+}
+#stage.waterfoul-alley .waterfoul-wash{ opacity:1; }
+#stage.waterfoul-alley .canary-img{
+  filter:hue-rotate(130deg) saturate(1.4) brightness(1.05);
+}
+.ember.droplet{
+  background:#7FE3F0;
+  box-shadow:0 0 6px 2px rgba(90,210,230,0.7);
+  animation-name:droplet-fall;
+}
+@keyframes droplet-fall{
+  0%{ transform:translate(0, 0); opacity:0.9; }
+  100%{ transform:translate(-20px, 480px); opacity:0; }
+}
+
 /* ============ BINS — pinned near the bottom, fixed position ============ */
 .binyard{
   position:absolute; left:0; right:0; bottom:174px;
@@ -236,6 +317,13 @@ body{
 
 .bin{ width:112px; cursor:pointer; user-select:none; -webkit-tap-highlight-color:transparent; }
 .bin-stage{ position:relative; width:112px; height:190px; }
+/* fresh bins drop in with a stagger so a new alley reads as a clear
+   event, not just "the confetti went away" */
+@keyframes bin-drop-in{
+  0%{ transform:translateY(-22px); opacity:0; }
+  100%{ transform:translateY(0); opacity:1; }
+}
+.bin.bin-new{ animation:bin-drop-in 0.3s cubic-bezier(.34,1.56,.64,1) backwards; }
 
 .bin-lid{
   position:absolute; top:10px; left:1px;
@@ -269,8 +357,9 @@ body{
 .bin-stencil-num{
   position:absolute; left:0; right:0; bottom:26px;
   text-align:center; z-index:5;
-  font-family:'Anton', sans-serif;
-  font-size:38px;
+  font-family:var(--font-num);
+  font-weight:700;
+  font-size:34px;
   color:#dcd6c8;
   text-shadow:2px 2px 0 rgba(0,0,0,0.5);
   pointer-events:none;
@@ -358,30 +447,74 @@ body{
   color:#fff;
   text-shadow:1px 1px 0 rgba(0,0,0,0.6);
 }
-
-/* ============ RUNNING TOTAL — top billing, the number the player is building ============ */
-.running-total{
-  position:absolute; left:0; right:0; top:14px;
-  text-align:center;
-  pointer-events:none;
-  z-index:10;
+/* Any number injected inline into otherwise-decorative label text —
+   workforce count, clean-streak count, milestone alley count — gets
+   this instead of the surrounding text's display font. */
+.num-font{
+  font-family:var(--font-num);
+  font-weight:700;
+  letter-spacing:0;
 }
-.running-total .badge{
-  display:inline-block;
+
+/* ============ SCOREBOARD — target vs total, the only two numbers that
+   matter second-to-second. One plaque, fixed width, so the eye never
+   has to travel or re-find the numbers as digits change. ============ */
+.scoreboard{
+  position:absolute; top:14px; left:50%;
+  transform:translateX(-50%);
+  display:flex; align-items:stretch;
   background:#1a1714; border:4px solid #000;
   border-radius:12px;
-  padding:8px 30px;
   box-shadow:0 6px 0 rgba(0,0,0,0.4);
-  font-family:'Bangers', cursive;
-  font-size:34px;
-  color:#fff;
-  letter-spacing:0.04em;
+  z-index:10;
+  pointer-events:none;
 }
-.running-total .num{ color:var(--canary); font-size:44px; }
-.running-total .num.match{ color:#6FE38A; }
+.score-col{
+  width:170px;
+  padding:8px 10px 6px;
+  text-align:center;
+}
+.score-divider{
+  width:4px; margin:8px 0;
+  background:#000;
+}
+.score-label{
+  font-family:'Anton', sans-serif;
+  font-size:13px; letter-spacing:0.05em;
+  line-height:1.25;
+  color:#8a8378;
+}
+.score-num{
+  font-family:var(--font-num);
+  font-weight:700;
+  font-size:34px; line-height:1.2;
+  font-variant-numeric:tabular-nums;
+  color:var(--canary);
+}
+.target-col .score-num{ color:#E8786A; }
+.total-col .score-num.match{ color:#6FE38A; }
 
 .buttons{ display:flex; justify-content:center; align-items:center; gap:16px; margin-top:4px; }
+/* ============ BUTTON SIZE SCALE ============
+   One explicit modifier per role, nothing ambient/contextual. Earlier
+   passes had panel-scoped rules like ".end-panel button.chunky" that
+   silently won specificity fights against later, more-targeted rules
+   (tier-btn, howto-btn) — buttons ended up sized by cascade accident,
+   not design. Every size now comes from a class actually present on
+   the button, so what you see in the CSS is what renders.
+   - base (no modifier): in-game round actions — Pass, End Game
+   - .btn-modal: overlay/modal actions — Play Again, Change Shift,
+     Start Shift, How Do I Bin, Back To The Alley, Back To Work
+   - .btn-compact: the tier list buttons (a caption sits under each,
+     so the button itself stays light)
+   - .btn-small: in-game corner utilities — Pause, SFX
+   - .btn-tiny: the True Firedamp toggle */
+button.chunky.btn-modal{ font-size:19px; padding:12px 22px; }
+button.chunky.btn-compact{ font-size:18px; padding:10px 12px; }
 button.chunky.btn-small{ font-size:14px; padding:9px 14px; }
+button.chunky.btn-tiny{ font-size:13px; padding:9px 10px; }
+/* fixed width so "SFX: On" <-> "SFX: Off" never jitters the layout */
+#btn-sfx{ width:88px; }
 button.chunky{
   font-family:'Bangers', cursive; font-size:19px; letter-spacing:0.02em;
   padding:13px 28px;
@@ -473,6 +606,8 @@ button.btn-cyan:active{ box-shadow:0 2px 0 #2a9e9b; }
 .overlay-screen.show{ opacity:1; pointer-events:auto; }
 #start-screen{ z-index:90; }
 #howto-screen{ z-index:95; }
+/* fully opaque so pausing can't be used to study the board */
+#pause-screen{ z-index:85; background:#0a0908; }
 .end-panel{
   background:#EDE7DC; color:#2a2723;
   border:5px solid #000; border-radius:16px;
@@ -492,16 +627,6 @@ button.btn-cyan:active{ box-shadow:0 2px 0 #2a9e9b; }
   font-size:15px; margin-bottom:18px;
   color:#4a443c;
 }
-.end-stats{
-  text-align:left;
-  font-family:'JetBrains Mono', monospace;
-  font-size:15px; line-height:1.85;
-  margin:0 0 22px;
-  background:rgba(0,0,0,0.05);
-  border-radius:8px;
-  padding:14px 18px;
-}
-.end-stats .val{ font-weight:700; color:#1A1714; }
 #end-record-banner{
   display:none;
   font-family:'Bangers', cursive;
@@ -510,18 +635,46 @@ button.btn-cyan:active{ box-shadow:0 2px 0 #2a9e9b; }
   text-shadow:2px 2px 0 rgba(0,0,0,0.12);
   margin:-8px 0 4px;
 }
-#end-records{
+/* ============ END SCREEN — This Run / Best / Δ ============
+   Δ is colored red/green against the record as it stood BEFORE this
+   run, so beating your own record shows the real margin instead of a
+   same-vs-same tie; "Best" shown is always the true all-time number,
+   updated whether or not this run was the one that set it. */
+.end-compare-table{
+  width:100%;
+  border-collapse:collapse;
   font-family:'Comic Neue', cursive;
-  font-size:14px; font-weight:700;
-  color:#5a5346;
-  margin:0 0 18px;
+  font-size:14px;
+  margin:0 0 16px;
+  background:rgba(0,0,0,0.05);
+  border-radius:8px;
+  overflow:hidden;
 }
-.end-panel button.chunky{ font-size:21px; padding:13px 30px; }
+.end-compare-table th{
+  font-family:'Comic Neue', cursive;
+  font-size:13px; font-weight:700; letter-spacing:0.02em;
+  color:#5a5346;
+  text-align:right;
+  padding:10px 12px 6px;
+}
+.end-compare-table th:first-child{ text-align:left; }
+.end-compare-table td{
+  padding:6px 12px;
+  text-align:right;
+  border-top:1px solid rgba(0,0,0,0.08);
+}
+.ec-label{ text-align:left; color:#5a5346; font-weight:700; }
+.ec-val{ font-family:var(--font-num); color:#1A1714; font-weight:500; font-variant-numeric:tabular-nums; }
+.end-delta{ font-family:var(--font-num); font-weight:500; font-variant-numeric:tabular-nums; }
+.end-delta.positive{ color:#2a6b3e; }
+.end-delta.negative{ color:#B23A3A; }
+.end-delta.neutral{ color:#8a8378; }
 .end-buttons{ display:flex; justify-content:center; gap:14px; }
-.end-buttons button.chunky{ font-size:19px; padding:12px 22px; }
 
 /* ============ START SCREEN ============ */
 .start-panel{ width:560px; }
+.start-panel-wide{ width:860px; }
+.end-panel-wide{ width:560px; }
 /* sticker-style title: canary yellow with a fat black outline so it
    reads on the cream panel without extra chrome */
 .start-panel h2{
@@ -532,24 +685,149 @@ button.btn-cyan:active{ box-shadow:0 2px 0 #2a9e9b; }
     -3px 0 0 #000, 3px 0 0 #000, 0 -3px 0 #000, 0 3px 0 #000,
     5px 6px 0 rgba(0,0,0,0.2);
 }
-#tier-buttons{ margin:0 0 18px; }
-.tier-row{
-  display:flex; align-items:center; gap:16px;
-  margin:10px 0;
+
+/* Buttons on the left, the selected shift's numbers on the right —
+   a picked shift never moves its own numbers around, so comparing
+   two shifts is just re-clicking, not re-reading a paragraph. */
+.tier-select-layout{
+  display:flex; gap:20px; align-items:flex-start;
+  margin:4px 0 16px;
+  text-align:left;
 }
+#tier-buttons{ flex:0 0 260px; }
+.tier-row{ margin:10px 0; }
 button.tier-btn{
-  flex:0 0 220px;
-  font-size:20px; padding:11px 12px;
+  display:block; width:100%;
   text-align:center;
+  box-sizing:border-box;
+}
+/* Picking a tier selects it rather than starting it — a persistent
+   "pushed in" look (darker fill, shadow collapsed like :active) so it
+   reads as committed, not just moused-over */
+button.tier-btn.selected{
+  top:3px;
+  background:linear-gradient(180deg, #5DDAD6, #2A9E9B);
+  box-shadow:0 2px 0 #1f7573;
+  color:#062e2c;
 }
 .tier-desc{
+  display:block;
   font-family:'Comic Neue', cursive;
-  font-size:15px; font-weight:700;
-  color:#4a443c;
-  text-align:left;
+  font-size:12px; font-weight:700;
+  color:#8a8378;
+  text-align:center;
   line-height:1.3;
+  margin-top:4px;
 }
-.howto-btn{ font-size:17px; }
+
+.tier-info-panel{
+  flex:1 1 auto; min-width:0;
+  min-height:370px; box-sizing:border-box;
+  background:rgba(0,0,0,0.05);
+  border-radius:10px;
+  padding:16px 18px;
+}
+.tier-info-empty{
+  font-family:'Comic Neue', cursive;
+  font-size:14px;
+  color:#8a8378;
+  text-align:center;
+  padding:60px 16px;
+}
+.tier-info-content{ display:none; }
+.tier-info-header{
+  font-family:'Bangers', cursive;
+  font-size:26px; line-height:1.1;
+  color:#B23A3A;
+}
+.tier-info-sub{
+  font-family:'Comic Neue', cursive;
+  font-size:13px; font-weight:700;
+  color:#5a5346;
+  margin:2px 0 10px;
+}
+/* Table on the left, the supplementary explanation (Firedamp's
+   Waterfoul blurb) on the right instead of stacked below — the panel
+   was getting too tall with everything in one column */
+.tier-info-body{
+  display:flex; align-items:flex-start; gap:16px;
+  margin-bottom:4px;
+}
+.tier-info-table{
+  flex:0 0 250px;
+  table-layout:fixed;
+  border-collapse:collapse;
+  font-family:'Comic Neue', cursive;
+  font-size:13px;
+}
+.tier-info-table tr{ border-bottom:1px solid rgba(0,0,0,0.08); }
+.tier-info-table tr:last-child{ border-bottom:none; }
+.tier-info-table td{ padding:5px 0; }
+.ti-label{ width:68%; color:#5a5346; font-weight:700; }
+.ti-val{
+  width:32%;
+  text-align:right;
+  font-family:var(--font-num);
+  color:#1A1714; font-weight:500;
+  font-variant-numeric:tabular-nums;
+}
+.ti-val.warn{ color:#B23A3A; }
+/* Anton at ~8-11px reads fine on the fixed 1280x720 stage, but the
+   stage gets scaled DOWN to fit real browser windows (0.6-0.8x is
+   typical), so those px sizes were rendering at ~5-9px on screen —
+   illegible. Comic Neue bold holds up better at small scaled sizes
+   than a condensed display face does, so small captions use it now. */
+.ti-tag{
+  display:inline-block;
+  white-space:nowrap;
+  font-family:'Comic Neue', cursive;
+  font-size:11px; font-weight:700; letter-spacing:0.01em;
+  padding:1px 6px; margin-left:5px;
+  border-radius:4px;
+  vertical-align:middle;
+  color:#fff;
+}
+.ti-tag-flock{ background:#C9981E; color:#1A1714; }
+.ti-tag-reward{ background:#2a6b3e; }
+/* Supplementary mechanic explanation a numbers table can't say —
+   currently only Firedamp's Waterfoul Alleys use this */
+.tier-info-extra{
+  flex:1 1 auto; min-width:0;
+  display:none;
+  padding-left:16px;
+  border-left:2px dashed rgba(0,0,0,0.12);
+  font-family:'Comic Neue', cursive;
+  font-size:13px; line-height:1.5;
+  color:#4a443c;
+}
+.tier-info-extra b{ color:#B23A3A; }
+
+/* Every tier's True Mode toggle */
+.tier-toggle{
+  display:flex;
+  align-items:center; gap:12px;
+  margin-top:10px; padding-top:10px;
+  border-top:2px dashed rgba(0,0,0,0.12);
+}
+/* .btn-tiny sets the font-size/padding; this just pins the width so
+   "TRUE MODE: OFF" <-> "ON" never jitters the layout */
+#btn-true-mode{
+  flex:0 0 auto; width:168px;
+  white-space:nowrap;
+}
+.tier-toggle-desc{
+  font-family:'Comic Neue', cursive;
+  font-size:12px; line-height:1.4;
+  color:#5a5346;
+}
+
+.start-actions{ display:flex; justify-content:center; gap:14px; }
+button.chunky:disabled{
+  opacity:0.45;
+  cursor:not-allowed;
+  filter:grayscale(0.5);
+}
+button.chunky:disabled:active{ top:0; }
 .howto-body{
   text-align:left;
   font-size:15px; line-height:1.55;

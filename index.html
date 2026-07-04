@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Bin Canary</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Anton&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Anton&family=Comic+Neue:wght@400;700&family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/game.css">
 </head>
 <body>
@@ -17,23 +17,41 @@
       <div class="wizard-portrait">
         <img id="wizard-img" src="img/wizard_grumpy.webp" alt="Hexer Decimal">
       </div>
-      <div class="speech-bar" id="speech-bar"></div>
-      <div class="target-sign">
-        <div class="label" data-str="sign.label"></div>
-        <div class="num" id="sign-target">&mdash;</div>
-      </div>
+      <div class="speech-bar" id="speech-bar" data-str="intro"></div>
     </div>
 
     <div class="streetlamp-glow"></div>
     <div class="fire-glow"></div>
+    <div class="waterfoul-wash"></div>
 
     <div class="hud-left">
       <div class="shift-badge" id="shift-badge"></div>
+      <div class="blaze-gauge" id="blaze-gauge">
+        <div class="blaze-label" data-str="blaze.label"></div>
+        <div class="blaze-value" id="blaze-value"></div>
+      </div>
+    </div>
+    <div class="hud-right">
+      <div class="money-chip" id="money-chip">
+        <div class="money-label" data-str="hud.money"></div>
+        <div class="money-value" id="money-value"></div>
+      </div>
       <div class="streak-chip" id="streak-chip"></div>
     </div>
 
-    <div class="running-total">
-      <div class="badge"><span data-str="total.label"></span> <span class="num" id="bin-total">0</span></div>
+    <!-- The two numbers the player is actually comparing every second,
+         grouped into one glanceable readout instead of split across
+         the screen. -->
+    <div class="scoreboard">
+      <div class="score-col target-col">
+        <div class="score-label" data-str="sign.label"></div>
+        <div class="score-num" id="sign-target">&mdash;</div>
+      </div>
+      <div class="score-divider"></div>
+      <div class="score-col total-col">
+        <div class="score-label" data-str="total.label"></div>
+        <div class="score-num" id="bin-total">0</div>
+      </div>
     </div>
 
     <div class="binyard" id="binyard"></div>
@@ -41,47 +59,66 @@
     <div class="control-bar" id="control-bar">
       <div class="title" data-str="title"></div>
       <div class="buttons">
+        <button class="chunky btn-yellow btn-small" id="btn-pause" onclick="togglePause()" data-str="buttons.pause"></button>
         <button class="chunky btn-yellow" id="btn-pass" onclick="skipAlley()" data-str="buttons.newAlley"></button>
-        <button class="chunky btn-cyan" onclick="giveUp()" data-str="buttons.giveUp"></button>
-      </div>
-      <div class="utility-buttons">
-        <button class="chunky btn-cyan btn-small" id="btn-pause" onclick="togglePause()" data-str="buttons.pause"></button>
-        <button class="chunky btn-cyan btn-small" id="btn-sfx" onclick="toggleSfx()"></button>
+        <button class="chunky btn-yellow" onclick="giveUp()" data-str="buttons.giveUp"></button>
+        <button class="chunky btn-yellow btn-small" id="btn-sfx" onclick="toggleSfx()"></button>
       </div>
       <div class="workforce-meter">
         <div class="workforce-fill" id="workforce-fill" style="width:100%;"></div>
-        <div class="workforce-label"><span data-str="meter.label"></span>&nbsp;<span id="workforce-num">0</span></div>
+        <div class="workforce-label"><span data-str="meter.label"></span>&nbsp;<span id="workforce-num" class="num-font">0</span></div>
       </div>
     </div>
 
     <div class="overlay-screen" id="end-screen">
-      <div class="end-panel">
+      <div class="end-panel end-panel-wide">
         <h2 id="end-headline"></h2>
         <div class="end-sub" id="end-sub">&mdash;</div>
-        <div class="end-stats">
-          <div><span data-str="end.statCanaries"></span> <span class="val" id="end-canaries-found">0</span></div>
-          <div><span data-str="end.statAlleys"></span> <span class="val" id="end-alleys-cleared">0</span></div>
-          <div><span data-str="end.statCorrect"></span> <span class="val" id="end-correct">0</span></div>
-          <div><span data-str="end.statSkipped"></span> <span class="val" id="end-incorrect">0</span></div>
-          <div><span data-str="end.statFalseAlarms"></span> <span class="val" id="end-false-alarms">0</span></div>
-          <div><span data-str="end.statAvg"></span> <span class="val" id="end-avg-time">&mdash;</span></div>
-          <div><span data-str="end.statRun"></span> <span class="val" id="end-run-time">&mdash;</span></div>
-        </div>
         <div id="end-record-banner" data-str="end.recordBanner"></div>
-        <div id="end-records"></div>
+        <table class="end-compare-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th data-str="end.colThisRun"></th>
+              <th data-str="end.colBest"></th>
+              <th data-str="end.colDelta"></th>
+            </tr>
+          </thead>
+          <tbody id="end-compare-body"></tbody>
+        </table>
         <div class="end-buttons">
-          <button class="chunky btn-yellow" onclick="playAgain()" data-str="buttons.playAgain"></button>
-          <button class="chunky btn-cyan" onclick="showStartScreen()" data-str="buttons.changeShift"></button>
+          <button class="chunky btn-modal btn-yellow" onclick="playAgain()" data-str="buttons.playAgain"></button>
+          <button class="chunky btn-modal btn-yellow" onclick="showStartScreen()" data-str="buttons.changeShift"></button>
         </div>
       </div>
     </div>
 
     <div class="overlay-screen show" id="start-screen">
-      <div class="end-panel start-panel">
+      <div class="end-panel start-panel start-panel-wide">
         <h2 data-str="start.title"></h2>
         <div class="end-sub" data-str="start.tagline"></div>
-        <div id="tier-buttons"></div>
-        <button class="chunky btn-cyan howto-btn" onclick="showHowTo()" data-str="buttons.howToPlay"></button>
+        <div class="tier-select-layout">
+          <div id="tier-buttons"></div>
+          <div class="tier-info-panel" id="tier-info-panel">
+            <div class="tier-info-empty" id="tier-info-empty" data-str="tierInfo.pickPrompt"></div>
+            <div class="tier-info-content" id="tier-info-content">
+              <div class="tier-info-header" id="tier-info-header"></div>
+              <div class="tier-info-sub" id="tier-info-sub"></div>
+              <div class="tier-info-body">
+                <table class="tier-info-table" id="tier-info-table"></table>
+                <div class="tier-info-extra" id="tier-info-extra"></div>
+              </div>
+              <div class="tier-toggle" id="tier-toggle">
+                <button class="chunky btn-tiny btn-yellow" id="btn-true-mode" onclick="toggleTrueMode()"></button>
+                <span class="tier-toggle-desc" data-str="tierInfo.trueModeDesc"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="start-actions">
+          <button class="chunky btn-modal btn-yellow" id="btn-start-shift" onclick="confirmStartShift()" data-str="buttons.startShift" disabled></button>
+          <button class="chunky btn-modal btn-yellow" onclick="showHowTo()" data-str="buttons.howToPlay"></button>
+        </div>
       </div>
     </div>
 
@@ -89,7 +126,7 @@
       <div class="end-panel start-panel">
         <h2 data-str="howto.title"></h2>
         <div class="howto-body" id="howto-body"></div>
-        <button class="chunky btn-yellow" onclick="hideHowTo()" data-str="buttons.back"></button>
+        <button class="chunky btn-modal btn-yellow" onclick="hideHowTo()" data-str="buttons.back"></button>
       </div>
     </div>
 
@@ -97,7 +134,7 @@
       <div class="end-panel">
         <h2 data-str="pause.title"></h2>
         <div class="end-sub" data-str="pause.sub"></div>
-        <button class="chunky btn-yellow" onclick="togglePause()" data-str="buttons.resume"></button>
+        <button class="chunky btn-modal btn-yellow" onclick="togglePause()" data-str="buttons.resume"></button>
       </div>
     </div>
 
