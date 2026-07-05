@@ -998,6 +998,19 @@ function newBinaryTarget(){
   isFirstRound = false;
   buildBins();
   updateBinTotal();
+  pulseNum(document.getElementById('sign-target'));
+  pulseNum(document.getElementById('bin-total'));
+  SFX.newAlley();
+}
+
+/* Restarts the .pop animation every call, even back-to-back — just
+   re-adding the class wouldn't retrigger a CSS animation already at
+   its end state, so the class is removed and a reflow is forced
+   (reading offsetWidth) before adding it back. */
+function pulseNum(el){
+  el.classList.remove('pop');
+  void el.offsetWidth;
+  el.classList.add('pop');
 }
 
 function giveUp(){

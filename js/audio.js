@@ -103,5 +103,11 @@ const SFX = (() => {
       noise(0.35, { vol:0.35, freq:900, q:0.8, when:0.05 });
       tone(180, 0.3, { type:'sine', vol:0.25, slideTo:90, when:0.02 });
     },
+    /* new alley dealt — plays constantly, so it stays short and quiet
+       rather than a proper fanfare like win()/milestone() */
+    newAlley(){
+      tone(700, 0.055, { type:'sine', vol:0.22 });
+      tone(950, 0.07, { type:'sine', vol:0.26, when:0.05 });
+    },
   };
 })();
