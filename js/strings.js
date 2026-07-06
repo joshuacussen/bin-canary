@@ -115,7 +115,7 @@ const STRINGS = {
       name: "Firedamp",
       desc: "The mine is on fire.",
       rank: "FIREPROOF LEGEND",
-      extra: "<b>The ultimate test of skill.</b> The mine is going to burn down—the longer you play, the stronger the flames get. Stymie the blaze by completing a perfect <b>Waterfoul Alley</b>.</br>*In these wet alleys, every bin has a bird and the current total is always hidden.",
+      extra: "<b>The ultimate test of skill.</b> The mine is going to burn down—the longer you play, the stronger the flames get. Stymie the blaze by completing a perfect <b>Waterfoul Alley</b>.</br>*In Waterfoul Alleys, the current total is always hidden.",
     },
   },
 
